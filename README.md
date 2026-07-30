@@ -22,10 +22,33 @@ with this repo.
   prepared-but-never-submitted: the agent fills everything up to the Submit
   button and you click it yourself. Compliance, not evasion.
 
-## Quick start
+## Install
+
+**Option A — one-line installer** (macOS / Linux; clones to `~/job-agent`,
+sets everything up, then opens the setup wizard):
 
 ```bash
-git clone <this-repo> jobagent && cd jobagent
+curl -fsSL https://raw.githubusercontent.com/Malik1942/job-agent/main/install.sh | bash
+```
+
+Prefer to read it first? [install.sh](install.sh) does exactly five things:
+find Python 3.10+, clone/update, create a venv, install the package +
+Chromium, launch the wizard. `JOBAGENT_DIR=…` changes the location,
+`JOBAGENT_SKIP_BROWSER=1` skips the Chromium download,
+`JOBAGENT_NO_WIZARD=1` installs without launching the wizard.
+
+**Option B — Homebrew** (macOS):
+
+```bash
+brew install malik1942/tap/job-agent
+job-agent-playwright-setup      # one-time Chromium download for the form filler
+jobagent setup --config ~/job-agent/config.yaml
+```
+
+**Option C — manual** (any platform, full control):
+
+```bash
+git clone https://github.com/Malik1942/job-agent && cd job-agent
 python3.12 -m venv .venv && source .venv/bin/activate
 
 pip install -e ".[browser]"     # or ".[all]" to add LLM + Slack extras

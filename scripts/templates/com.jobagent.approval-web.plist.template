@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jobagent.approval-web</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <!-- Host/port come from approval_web in config.yaml (default 127.0.0.1:8787).
+         Set approval_web.host to your Tailscale IP to reach it from your phone. -->
+    <string>cd __JOBAGENT_DIR__ &amp;&amp; .venv/bin/python scripts/run_with_env.py .venv/bin/python -u -m jobagent.cli approval-web --config config.yaml --host 0.0.0.0 --port 8787</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__JOBAGENT_DIR__</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>__JOBAGENT_DIR__/output/approval-web.launchd.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__JOBAGENT_DIR__/output/approval-web.launchd.err.log</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+  </dict>
+</dict>
+</plist>

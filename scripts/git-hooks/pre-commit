@@ -1,0 +1,69 @@
+#!/bin/sh
+# jobagent pre-commit guard.
+# Refuses a commit if it would include (1) sensitive/generated files or
+# (2) high-signal secrets -- even if something was force-added past .gitignore.
+#
+# Install once per clone (survives a `.git` wipe because this file is tracked):
+#     git config core.hooksPath scripts/git-hooks
+#
+# Emergency bypass (you should basically never need this):
+#     git commit --no-verify
+
+set -u
+fail=0
+
+# --- 1. Block sensitive / generated paths --------------------------------
+# Basename matches are exact, so config.example.yaml / answers.example.md /
+# scripts/.env.example are intentionally NOT blocked.
+blocked_list=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r f; do
+  case "/$f/" in
+    (*/output/*|*/build/*|*/dist/*|*.egg-info/*|*__pycache__/*) echo "$f"; continue ;;
+  esac
+  base=${f##*/}
+  case "$base" in
+    (config.yaml|answers.md|jobagent.db|.env|.DS_Store|*.pyc) echo "$f" ;;
+  esac
+done)
+
+if [ -n "$blocked_list" ]; then
+  echo "pre-commit: BLOCKED sensitive/generated file(s):"
+  echo "$blocked_list" | sed 's/^/    /'
+  fail=1
+fi
+
+# --- 2. High-signal secret scan of staged content ------------------------
+# Real key formats and credentials-in-URL only. "/services/..." style
+# placeholders don't match because the patterns require real characters.
+pattern='AKIA[0-9A-Z]{16}'
+pattern="$pattern"'|AIza[0-9A-Za-z_-]{35}'
+pattern="$pattern"'|sk-[A-Za-z0-9]{20,}'
+pattern="$pattern"'|xox[baprs]-[0-9A-Za-z-]{10,}'
+pattern="$pattern"'|gh[pousr]_[0-9A-Za-z]{36,}'
+pattern="$pattern"'|-----BEGIN [A-Z ]*PRIVATE KEY-----'
+pattern="$pattern"'|hooks\.slack\.com/services/[A-Za-z0-9_]{6,}'
+pattern="$pattern"'|discordapp?\.com/api/webhooks/[0-9]'
+pattern="$pattern"'|[a-zA-Z][a-zA-Z0-9+.-]*://[^/[:space:]:@]+:[^/[:space:]:@]+@'
+
+secret_hits=$(git grep -nI --cached -E "$pattern" -- . 2>/dev/null)
+if [ -n "$secret_hits" ]; then
+  echo "pre-commit: BLOCKED possible secret in staged content:"
+  echo "$secret_hits" | sed 's/^/    /'
+  fail=1
+fi
+
+# --- 3. Personal-data gate ------------------------------------------------
+# Never let a personal token back into a commit (denylist is local-only;
+# public clones fall back to the generic patterns).
+if [ -x scripts/check_no_personal.sh ] && ! scripts/check_no_personal.sh >/dev/null 2>&1; then
+  echo "pre-commit: check_no_personal failed — run scripts/check_no_personal.sh to see the hits"
+  fail=1
+fi
+
+if [ "$fail" = "1" ]; then
+  echo ""
+  echo "Commit aborted by scripts/git-hooks/pre-commit."
+  echo "Unstage the file(s) above, or fix the secret. Bypass with --no-verify only if you are certain."
+  exit 1
+fi
+
+exit 0

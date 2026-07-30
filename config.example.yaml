@@ -1,0 +1,300 @@
+# Copy this to config.yaml and edit. Nothing here submits anything until you
+# set both autonomy.mode: auto AND autonomy.live_submit: true.
+
+profile:
+  name: "Alex Rivera"
+  email: "alex.rivera@example.com"
+  phone: "+1 555 010 0100"
+  location: "Portland, OR"
+  website: "https://alexrivera.example.com"    # your portfolio; letters cite it
+  linkedin: "https://www.linkedin.com/in/alex-rivera-example"
+  summary: "Product designer who prototypes in code. Ships small, focused tools and cares about making complex systems feel clear and humane."
+  # Roles you actually want. Matched against the job title.
+  titles:
+    - "AI Product Designer"
+    - "Product Designer"
+    - "AI Designer"
+    - "AI UX Designer"
+    - "AI Interaction Designer"
+    - "Design Engineer"
+    - "UX Designer"
+    - "UX/UI Designer"
+    - "UI/UX Designer"
+    - "User Experience Designer"
+    - "UX Engineer"
+    - "UX Researcher"
+    - "Interaction Designer"
+  # Keywords that count in your favor, matched against title + description.
+  skills:
+    - "SwiftUI"
+    - "React"
+    - "prototyping"
+    - "design systems"
+    - "design thinking"
+    - "system thinking"
+    - "systems thinking"
+    - "product strategy"
+    - "AI product design"
+    - "AI-native"
+    - "user research"
+    - "AI"
+  # Acceptable locations. Leave empty to accept any (remote always counts).
+  locations:
+    - "Portland"
+    - "Remote"
+  # Fallback resume, plus optional role-specific variants matched against the
+  # job title (first keyword hit wins; order = priority, most specific first).
+  # A variant whose file is missing HOLDS the job rather than attaching the
+  # wrong resume.
+  resume_path: "resume.pdf"
+  # resume_variants:
+  #   - { keywords: ["design engineer", "ux engineer"], path: "design-engineer-resume.pdf" }
+  #   - { keywords: ["ux designer", "interaction designer"], path: "ux-designer-resume.pdf" }
+  #   - { keywords: ["product designer"], path: "product-designer-resume.pdf" }
+  answers_path: "answers.md"   # your reference answers for form questions
+
+# Cover-letter content. The generator supplies structure (salutation, company
+# line, role matching, PDF); YOU supply the voice. Each family is one framing,
+# matched against the job title by its keywords (first match wins; the
+# default_family is used when nothing matches). `marker` is a phrase the
+# validator requires in the finished letter, so a letter framed for the wrong
+# family can never ship. Run `jobagent setup` to fill this in a browser.
+coverletter:
+  default_family: product_designer
+  families:
+    product_designer:
+      keywords: []          # default family; keywords not needed
+      identity: "I am a product designer who moves comfortably between research, interaction design, and working prototypes. I care most about making complex systems feel clear, usable, and human."
+      craft: "I use code when it helps me test and communicate an idea, but design judgment is the center of my practice."
+      closing_mix: "product judgment, prototyping ability, and systems thinking"
+      marker: "product designer"
+    design_engineer:
+      keywords: ["design engineer", "design technologist", "creative technologist", "ux engineer"]
+      identity: "I am a design engineer: I design the system and then build it myself, moving between design tools and code daily."
+      craft: "I treat code as design material — my side projects go from concept to shipped implementation entirely in my hands."
+      closing_mix: "design craft, systems thinking, and hands-on implementation"
+      marker: "design engineer"
+    ux_designer:
+      keywords: ["ux designer", "user experience designer", "ux/ui", "ui/ux", "interaction designer"]
+      identity: "I am a UX designer with a research-led practice: user interviews, usability testing, and synthesis ground everything I ship."
+      craft: "Code is one of my prototyping tools, but my center of gravity is the user experience."
+      closing_mix: "research-led judgment, interaction craft, and systems thinking"
+      marker: "ux designer"
+  # Project stories, included when a keyword appears in the job text (up to 3).
+  projects:
+    - keywords: ["ai", "llm", "agent", "model"]
+      text: "Fieldnote is the closest example of how I work: an AI note-capture iOS app where I defined the product behavior, interaction model, and shipped experience."
+    - keywords: ["web", "planning", "travel", "consumer"]
+      text: "Wayfare, a trip-planning web app, shows how I turn a fuzzy multi-step task into a clear, forgiving flow."
+    - keywords: ["wearable", "health", "sensor", "hardware"]
+      text: "Pulse, a wearable habit-tracker concept, reflects my physical-digital design foundation."
+
+autonomy:
+  mode: "review"        # "review" holds everything for you; "auto" drives the form
+  live_submit: false    # master switch; must be true for any real submission
+  min_score: 0.55       # 0..1, minimum score to act on a job
+  max_applications_per_run: 25  # safety cap on auto-submit attempts per run (0 = no cap)
+  # Surface these dream companies in scanning/ranking only. The agent will
+  # never browser-fill or submit them, even in auto + live mode.
+  manual_only_companies:
+    - "Apple"
+    - "Google"
+    - "Microsoft"
+  # ATS platforms that flag automated submits as spam (Ashby's fraud
+  # detection). The agent FILLS + screenshots these but never clicks submit —
+  # you finish them yourself. Matched against a job's source kind.
+  manual_submit_kinds:
+    - "ashby"
+  # Hold (never submit) when the egress IP looks like a datacenter/VPN — the
+  # top ATS fraud signal. Held as needs_review so you can turn the VPN off and
+  # rerun. Compliance, not evasion.
+  block_datacenter_ip: true
+  # Per-ATS profiles. Sensible defaults ship in code (ashby=manual with its
+  # expected fields, greenhouse/lever=auto); override or extend per kind here.
+  # submit_mode routes the job; expected_fields drives `jobagent coverage`,
+  # which flags answers your forms will ask for but your file can't resolve —
+  # BEFORE a live form rejects you. Only the kinds you list here are overridden.
+  # ats_profiles:
+  #   ashby:
+  #     submit_mode: manual
+  #     expected_fields: ["Legal Name", "Applicant Arbitration Agreement Acknowledgement"]
+  #   greenhouse:
+  #     submit_mode: auto
+  #     expected_fields: ["Please identify your race", "Location (City)"]
+  # Two-phase approvals: Approve fills + screenshots (no submit); a separate
+  # Confirm actually submits. false = old single-step Approve.
+  two_phase_approval: true
+  # Random pause between batch submissions, in seconds, so Confirm All /
+  # Approve All doesn't fire a bot-like burst. Set both to 0 to disable.
+  batch_pause_min_seconds: 45
+  batch_pause_max_seconds: 120
+
+# Phone approval web panel. Default binds localhost only. To use it from your
+# phone, set host to your Tailscale/VPN IP (recommended) — 0.0.0.0 exposes the
+# panel to everyone on the network.
+approval_web:
+  host: "127.0.0.1"
+  port: 8787
+  rotate_token: true   # new token (and link) every panel start
+
+apply:
+  headless: false               # watch it run the first several times
+  hold_on_unknown_required: true  # never submit if a required field is unanswered
+  use_llm_for_answers: false    # LLM answers uncovered questions from your facts
+  screenshot_dir: "output/screenshots"
+  dry_run_pause_seconds: 8      # visible dry-runs pause before closing
+  locale: "en-US"               # browser context locale (honest, not spoofed)
+  timezone_id: ""               # your real IANA tz, e.g. "America/Los_Angeles"; empty auto-detects
+  # Labels matching these are NEVER auto-filled (portfolio passwords, access
+  # codes). If such a field is required, the job is held for you instead.
+  never_fill_keywords: ["password", "passcode", "access code"]
+
+# Form-filler diagnostics (per-field fill actions, scan-diff re-render signals,
+# pre-submit validation). INFO is the useful default; DEBUG adds readback values.
+# `file` gives the launchd daily run a durable log — empty means stderr only.
+logging:
+  level: INFO
+  file: ""                      # e.g. "output/jobagent.log"
+
+# Some boards (Oura's Greenhouse) email a numeric code after submit that must
+# be entered to finish. When enabled, the filler reads that code from the
+# APPLICATION inbox over IMAP and completes the step (it satisfies the anti-spam
+# check for the real applicant — it does not bypass it). Off by default.
+# Setup: create a Gmail App Password for the email your applications use (the
+# address in answers.md), then export it as JOBAGENT_IMAP_PASSWORD in
+# scripts/.env. Without it, these boards HOLD with "enter the code" instead.
+email_verify:
+  enabled: false
+  imap_host: "imap.gmail.com"
+  imap_user: ""                 # empty -> profile.email (where codes land)
+  password_env: "JOBAGENT_IMAP_PASSWORD"
+  timeout_seconds: 120
+
+# Trust gates for reading a code out of the inbox (untrusted input). A code is
+# used only if it (1) comes from an allowlisted sender FOR THE ATS that
+# triggered the poll, (2) follows a known anchor phrase and isn't a plain word,
+# and (3) binds to that ATS + the poll's time window. Never trust, verify
+# provenance. Add a sender domain ONLY from a real received email — an empty
+# list holds the job and asks for a sample (no extrapolating one ATS's sender to
+# another).
+verification:
+  senders:
+    greenhouse: ["greenhouse-mail.io", "greenhouse.io"]
+    lever: []                   # fill in when the first Lever verification is seen
+    ashby: []
+  # anchors: []                 # empty -> built-in defaults (security code,
+  #                             #  verification code, your code is, copy and
+  #                             #  paste this code)
+  clock_skew_seconds: 120
+
+llm:
+  # auto = Claude if ANTHROPIC_API_KEY exists, otherwise OpenAI/Codex if
+  # OPENAI_API_KEY exists. You can force: "anthropic", "openai", or "off".
+  provider: "auto"
+  # Set true to use LLM cover letters during daily runs without passing --llm.
+  cover_letters: false
+  anthropic_model: "claude-sonnet-4-6"
+  openai_model: "gpt-5.5"
+  answer_max_tokens: 300
+  cover_letter_max_tokens: 600
+
+# New-match notifications. Secrets are read from environment variables, never
+# from this file. Both channels are off by default.
+notify:
+  only_status: ["needs_review", "applied"]  # which new records to notify about
+  min_score: 0.0
+  email:
+    enabled: false
+    smtp_host: "smtp.gmail.com"
+    smtp_port: 587
+    username: "you@example.com"
+    from_addr: "you@example.com"
+    to_addrs: ["you@example.com"]
+    # export JOBAGENT_SMTP_PASSWORD=... (a Gmail app password, not your login)
+    password_env: "JOBAGENT_SMTP_PASSWORD"
+  slack:
+    enabled: false
+    # export JOBAGENT_SLACK_WEBHOOK=https://hooks.slack.com/services/...
+    webhook_env: "JOBAGENT_SLACK_WEBHOOK"
+
+filters:
+  # Any of these in a title or description drops the job to 0.
+  exclude_keywords:
+    - "unpaid"
+    - "clearance required"
+  # If set, a job must contain at least one of these to survive. Empty = off.
+  require_keywords: []
+  # Hardware/facilities engineering titles that get mis-caught by the "Design
+  # Engineer" preference (Mechanical/Physical/Electrical/Data Center/AV/NPI
+  # "Design Engineer"). Matched against the TITLE ONLY (word-boundary), never
+  # the description — so a role's "hardware" in prose doesn't kill it, and a
+  # bare "Design Engineer" (incl. software/hardware-hybrid) is kept. Has a
+  # calibrated built-in default; override here to tune.
+  # title_exclude_keywords: ["mechanical engineer", "physical design engineer", ...]
+
+scoring:
+  # Role preference: AI/Product Designer first, then Design Engineer, then UX.
+  role_priority:
+    - "AI Product Designer"
+    - "Product Designer"
+    - "AI Designer"
+    - "Design Engineer"
+    - "UX Designer"
+    - "User Experience Designer"
+    - "Interaction Designer"
+  role_priority_bonus: 0.30
+  # Prefer new-grad / early-career roles, matching your older job-hunt task.
+  preferred_keywords:
+    - "new grad"
+    - "new graduate"
+    - "recent graduate"
+    - "university graduate"
+    - "graduate"
+    - "entry level"
+    - "entry-level"
+    - "early career"
+    - "junior"
+    - "associate"
+  preferred_bonus: 0.20
+  # Keep senior roles visible but ranked lower.
+  penalty_keywords:
+    - "senior"
+    - "staff"
+    - "principal"
+    - "lead"
+    - "manager"
+    - "director"
+    - "head of"
+  penalty: 0.20
+
+# Add company boards here. token is the slug in the careers URL.
+#   greenhouse       -> boards.greenhouse.io/<token>
+#   lever            -> jobs.lever.co/<token>
+#   ashby            -> jobs.ashbyhq.com/<token>
+#   workable         -> apply.workable.com/<token>
+#   smartrecruiters  -> careers.smartrecruiters.com/<token>
+#   recruitee        -> <token>.recruitee.com
+# LinkedIn / Indeed / ZipRecruiter: use kind: scan_only. Auto-submitting to
+# them breaks their terms of service and risks your account.
+sources:
+  - { kind: greenhouse, token: "stripe",  label: "Stripe" }
+  - { kind: lever,      token: "netflix", label: "Netflix" }
+  - { kind: ashby,      token: "linear",  label: "Linear" }
+  # - { kind: workable,        token: "oura-health-ltd", label: "Oura (EU)" }
+  # - { kind: smartrecruiters, token: "smartrecruiters", label: "SmartRecruiters" }
+  # - { kind: recruitee,       token: "sendcloud",       label: "Sendcloud" }
+  # Adzuna is a DISCOVERY source: it searches many boards at once and its
+  # results are scan-only unless a posting's apply URL is on an ATS above.
+  # Needs free credentials in env vars: ADZUNA_APP_ID + ADZUNA_APP_KEY
+  # (https://developer.adzuna.com). Token is country[:what[:where]].
+  # - { kind: adzuna, token: "us:product designer:seattle", label: "Adzuna US" }
+  # - { kind: scan_only,  token: "linkedin", label: "LinkedIn (manual)" }
+
+db_path: "jobagent.db"
+output_dir: "output"
+
+# Human-readable log of submitted jobs. A row is appended automatically for
+# each job whose status is in csv_statuses. Opens cleanly in Excel / Numbers.
+# Columns: 时间, 公司, 职位, 地点, 来源, 匹配分, 状态, 求职信, 岗位链接, 详细信息
+csv_path: "output/applied.csv"
+csv_statuses: ["applied"]   # add "needs_review" here to also log held-for-review jobs

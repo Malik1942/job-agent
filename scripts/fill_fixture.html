@@ -1,0 +1,191 @@
+<!doctype html>
+<!-- Local test double for ATS application forms. Replicates the behaviors
+     that broke the 2026-07-01 Greenhouse batch:
+       1. React-style controlled inputs (raw .value= writes are ignored;
+          only values arriving via input events count)
+       2. An async location autocomplete that only validates when a
+          suggestion is actually SELECTED (typed text alone fails)
+       3. A combobox (react-select style) for work authorization
+       4. A consent checkbox with no required attribute that still gates
+          submission (Ashby-style)
+     ?mode=reject makes submission always fail validation, for testing the
+     post-submit verifier's NOT-confirmed branch. -->
+<html><head><meta charset="utf-8"><title>Fixture — Product Designer</title>
+<style>
+  body { font-family: sans-serif; max-width: 560px; margin: 24px auto; }
+  .field { margin: 14px 0; }
+  label { display: block; font-weight: 600; margin-bottom: 4px; }
+  input { width: 100%; padding: 8px; box-sizing: border-box; }
+  .error { color: #c00; font-size: 13px; display: none; }
+  ul.listbox { border: 1px solid #999; margin: 0; padding: 0; list-style: none;
+               position: relative; background: #fff; display: none; }
+  ul.listbox li { padding: 6px 8px; cursor: pointer; }
+  ul.listbox li:hover { background: #eef; }
+</style></head><body>
+<h1>Product Designer — Apply</h1>
+<form id="app" onsubmit="return false;">
+  <div class="field">
+    <label for="first">First Name *</label>
+    <input id="first" name="first_name" required>
+    <div class="error" id="err-first">This field is required</div>
+  </div>
+
+  <div class="field">
+    <label for="email">Email *</label>
+    <input id="email" name="email" required>
+    <div class="error" id="err-email">This field is required</div>
+  </div>
+
+  <div class="field">
+    <label for="loc">Location (City) *</label>
+    <input id="loc" role="combobox" aria-required="true" autocomplete="off"
+           name="job_application[location]">
+    <ul class="listbox" id="loc-list" role="listbox"></ul>
+    <div class="error" id="err-loc">Please enter your location</div>
+  </div>
+
+  <div class="field">
+    <label for="auth">Are you authorized to work in the country for which you applied? *</label>
+    <input id="auth" role="combobox" aria-required="true" autocomplete="off">
+    <ul class="listbox" id="auth-list" role="listbox"></ul>
+    <div class="error" id="err-auth">This field is required</div>
+  </div>
+
+  <!-- ?extra=1 injects a required native <select> stuck on a placeholder
+       option (value is non-empty, so the OLD value==="" sweep missed it — the
+       State-after-City class) plus a required file input. Both are left
+       unfilled by the filler (no State alias; empty resume_path), so they
+       exercise the pre-submit invariant end to end. -->
+  <div id="extra-fields"></div>
+
+  <div class="field">
+    <label><input type="checkbox" id="consent" style="width:auto">
+      I agree to allow this company to retain my data — privacy policy</label>
+    <div class="error" id="err-consent">Consent is required</div>
+  </div>
+
+  <button id="go" type="button">Submit application</button>
+</form>
+
+<script>
+  const state = { first: '', email: '', locPicked: '', authPicked: '' };
+  // Controlled inputs: ONLY input events update state (React behavior).
+  for (const id of ['first', 'email']) {
+    document.getElementById(id).addEventListener('input', e => {
+      state[id] = e.target.value;
+    });
+  }
+
+  const GEO = ['Seattle, Washington, United States',
+               'Seattle, District 6, Türkiye',
+               'SeaTac, Washington, United States'];
+  function wireCombo(inputId, listId, optionsFor, stateKey) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    input.addEventListener('input', () => {
+      state[stateKey] = '';                    // typing clears any selection
+      const q = input.value.trim().toLowerCase();
+      list.innerHTML = '';
+      if (q.length < 1) { list.style.display = 'none'; return; }
+      setTimeout(() => {                       // async suggestions
+        const opts = optionsFor(q);
+        list.innerHTML = '';
+        for (const o of opts) {
+          const li = document.createElement('li');
+          li.setAttribute('role', 'option');
+          li.textContent = o;
+          li.onclick = () => {
+            input.value = o; state[stateKey] = o;
+            list.style.display = 'none';
+          };
+          list.appendChild(li);
+        }
+        list.style.display = opts.length ? 'block' : 'none';
+      }, 250);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && list.firstChild && list.style.display !== 'none') {
+        list.firstChild.click();
+      } else if (e.key === 'ArrowDown' && list.firstChild) {
+        list.firstChild.classList.add('hi');
+      }
+    });
+  }
+  wireCombo('loc', 'loc-list',
+    q => GEO.filter(g => g.toLowerCase().includes(q.split(',')[0].trim())),
+    'locPicked');
+  wireCombo('auth', 'auth-list',
+    q => ['Yes', 'No'].filter(o => o.toLowerCase().startsWith(q)), 'authPicked');
+
+  const hasExtra = new URLSearchParams(location.search).get('extra');
+  if (hasExtra) {
+    document.getElementById('extra-fields').innerHTML =
+      '<div class="field">' +
+      '  <label for="state">State *</label>' +
+      '  <select id="state" name="state" required aria-required="true">' +
+      '    <option value="none">Select a state…</option>' +
+      '    <option value="WA">Washington</option>' +
+      '    <option value="CA">California</option>' +
+      '    <option value="NY">New York</option>' +
+      '  </select>' +
+      '  <div class="error" id="err-state">Please select a state</div>' +
+      '</div>' +
+      '<div class="field">' +
+      // A "weird" placeholder: non-empty non-sentinel value ("pick"), a label
+      // that matches no placeholder wording, not disabled, so presubmit_verdict
+      // ALONE cannot tell it from a real selection. It holds only because the
+      // filler resolved no answer for it (the no-answer fold). No alias exists
+      // for this label, so it is always left unfilled.
+      '  <label for="region">Preferred work region *</label>' +
+      '  <select id="region" name="region" required aria-required="true">' +
+      '    <option value="pick">Home region</option>' +
+      '    <option value="west">West</option>' +
+      '    <option value="east">East</option>' +
+      '  </select>' +
+      '  <div class="error" id="err-region">Please choose a region</div>' +
+      '</div>' +
+      '<div class="field">' +
+      '  <label for="resume">Resume *</label>' +
+      '  <input id="resume" name="resume" type="file" required ' +
+      '         aria-required="true">' +
+      '  <div class="error" id="err-resume">A resume is required</div>' +
+      '</div>';
+  }
+
+  document.getElementById('go').addEventListener('click', () => {
+    const reject = new URLSearchParams(location.search).get('mode') === 'reject';
+    const bad = [];
+    const show = (id, cond) => {
+      document.getElementById(id).style.display = cond ? 'block' : 'none';
+      if (cond) bad.push(id);
+    };
+    show('err-first', !state.first.trim());
+    show('err-email', !state.email.trim());
+    show('err-loc', !state.locPicked);
+    show('err-auth', !state.authPicked);
+    if (hasExtra) {
+      const st = document.getElementById('state');
+      const rg = document.getElementById('region');
+      const rz = document.getElementById('resume');
+      show('err-state', !st || st.value === 'none');
+      show('err-region', !rg || rg.value === 'pick');
+      show('err-resume', !rz || !rz.files || rz.files.length === 0);
+    }
+    show('err-consent', !document.getElementById('consent').checked);
+    if (bad.length || reject) {
+      if (reject) {
+        for (const id of ['err-first']) {
+          document.getElementById(id).style.display = 'block';
+          document.getElementById(id).textContent =
+            'Something went wrong — this field is required';
+        }
+      }
+      return;                                  // form stays on screen
+    }
+    document.body.innerHTML =
+      '<h1>Thank you for applying</h1>' +
+      '<p>Your application has been submitted. We have received your ' +
+      'application and will be in touch.</p>';
+  });
+</script>
+</body></html>

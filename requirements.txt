@@ -1,0 +1,14 @@
+requests>=2.31
+PyYAML>=6.0
+reportlab>=5.0
+
+# Needed for auto-submit (autonomy.mode: auto). After installing, run:
+#   playwright install chromium
+playwright>=1.44
+
+# LLM cover letters and grounded answers for uncovered form questions.
+# OpenAI/Codex-compatible calls use the requests dependency above.
+anthropic>=0.40
+
+# Slack approval buttons via Socket Mode.
+slack-bolt>=1.22

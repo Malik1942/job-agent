@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  macOS daily scheduler for jobagent (runs at 09:00 local time).
+
+  1. Edit the two paths below to your real jobagent folder.
+  2. Copy this file to ~/Library/LaunchAgents/com.jobagent.daily.plist
+  3. Load it:   launchctl load ~/Library/LaunchAgents/com.jobagent.daily.plist
+     Unload:    launchctl unload ~/Library/LaunchAgents/com.jobagent.daily.plist
+     Run now:   launchctl start com.jobagent.daily
+
+  Logs go to output/daily.log inside the project (the script handles that),
+  and launchd's own stdout/stderr go to /tmp/jobagent.*.log below.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jobagent.daily</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>cd __JOBAGENT_DIR__ &amp;&amp; mkdir -p output &amp;&amp; echo "===== $(date '+%Y-%m-%d %H:%M:%S') =====" &gt;&gt; output/daily.log &amp;&amp; .venv/bin/python scripts/run_with_env.py .venv/bin/python -m jobagent.cli run --config config.yaml &gt;&gt; output/daily.log 2&gt;&amp;1 &amp;&amp; .venv/bin/python scripts/run_with_env.py .venv/bin/python -m jobagent.cli review-queue --config config.yaml --interactive --limit 10 &gt;&gt; output/daily.log 2&gt;&amp;1 &amp;&amp; echo "" &gt;&gt; output/daily.log</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>JOBAGENT_DIR</key>
+    <string>__JOBAGENT_DIR__</string>
+  </dict>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>__JOBAGENT_DIR__/output/daily.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>__JOBAGENT_DIR__/output/daily.launchd.err.log</string>
+</dict>
+</plist>

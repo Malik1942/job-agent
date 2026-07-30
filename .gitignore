@@ -1,0 +1,22 @@
+.venv/
+__pycache__/
+*.pyc
+config.yaml
+answers.md
+jobagent.db
+output/
+scripts/.env
+
+# generated build artifacts / OS cruft (were getting staged)
+*.egg-info/
+build/
+dist/
+.DS_Store
+tmp/
+.worktrees/
+
+# personal resume PDFs (role variants live in the repo root, never in git)
+*resume*.pdf
+
+# personal leak-check denylist (contains the personal tokens themselves)
+scripts/.denylist

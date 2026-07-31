@@ -21,7 +21,7 @@ blocked_list=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= rea
   esac
   base=${f##*/}
   case "$base" in
-    (config.yaml|answers.md|jobagent.db|.env|.DS_Store|*.pyc) echo "$f" ;;
+    (config.yaml|answers.md|jobagent.db|.env|.DS_Store|*.pyc|*resume*.pdf) echo "$f" ;;
   esac
 done)
 
